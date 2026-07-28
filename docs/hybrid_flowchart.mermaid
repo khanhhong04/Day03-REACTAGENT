@@ -1,0 +1,70 @@
+%% 📊 HYBRID FLOWCHART — Trợ Lý Sàng Lọc Hồ Sơ Tuyển Dụng & Hẹn Phỏng Vấn
+%% Role 5: Phân luồng Chatbot Path vs ReAct Agent Path
+%% Mốc 4: Tương tác liên nhóm & Hybrid Architecture
+
+flowchart TD
+    START(["🧑 Người dùng đặt câu hỏi"]) --> ROUTER{"🔀 ROUTER<br/>Phân loại câu hỏi"}
+
+    %% ========== CHATBOT PATH ==========
+    ROUTER -->|"Câu hỏi đơn giản<br/>(FAQ, chính sách, lý thuyết)"| CHATBOT_PATH
+
+    subgraph CHATBOT_PATH ["💬 CHATBOT PATH — Nhanh & Rẻ"]
+        direction TB
+        CP1["📝 Nhận câu hỏi"] --> CP2["🤖 LLM sinh câu trả lời<br/>(1 lần gọi, không Tool)"]
+        CP2 --> CP3["✅ Trả lời trực tiếp<br/>từ kiến thức có sẵn"]
+    end
+
+    %% ========== REACT AGENT PATH ==========
+    ROUTER -->|"Câu hỏi phức tạp<br/>(Cần dữ liệu thực, hành động)"| AGENT_PATH
+
+    subgraph AGENT_PATH ["🧠 REACT AGENT PATH — Suy luận & Hành động"]
+        direction TB
+        AP1["📝 Nhận câu hỏi + System Prompt ReAct"]
+        AP1 --> AP2["🧠 Thought: Suy luận bước tiếp theo"]
+        AP2 --> AP3{"🛠️ Action: Chọn Tool phù hợp"}
+
+        AP3 -->|"Sàng lọc CV"| TOOL1["📋 screen_resume<br/>Đọc CV & chấm điểm"]
+        AP3 -->|"Kiểm tra lịch"| TOOL2["📅 check_calendar<br/>Xem lịch trống"]
+        AP3 -->|"Đặt lịch phỏng vấn"| TOOL3["📧 schedule_interview<br/>Hẹn lịch & gửi email"]
+
+        TOOL1 --> OBS["👁️ Observation:<br/>Kết quả thật từ Tool"]
+        TOOL2 --> OBS
+        TOOL3 --> OBS
+
+        OBS --> DECIDE{"❓ Đã đủ thông tin?"}
+        DECIDE -->|"Chưa đủ"| AP2
+        DECIDE -->|"Đã đủ"| FINAL["🏁 Final Answer:<br/>Câu trả lời có bằng chứng"]
+    end
+
+    %% ========== GUARDRAIL ==========
+    DECIDE -->|"Đạt MAX_ITERATIONS<br/>hoặc Tool báo lỗi"| GUARDRAIL
+
+    subgraph GUARDRAIL ["🛡️ GUARDRAIL — Phanh An Toàn"]
+        direction TB
+        GR1["⚠️ Phát hiện bất thường:<br/>- Lặp quá 3 bước<br/>- Tool không tồn tại<br/>- Tham số không hợp lệ"]
+        GR1 --> GR2["🚫 Ngắt vòng lặp an toàn"]
+        GR2 --> GR3["💬 Trả về thông báo lịch sự<br/>+ Gợi ý sửa lỗi"]
+    end
+
+    %% ========== OUTPUT ==========
+    CP3 --> OUTPUT(["📤 Trả kết quả cho Người dùng"])
+    FINAL --> OUTPUT
+    GR3 --> OUTPUT
+
+    %% ========== VÍ DỤ PHÂN LUỒNG ==========
+    %% Câu hỏi đơn giản → Chatbot:
+    %%   - "Quy trình tuyển dụng gồm những bước nào?"
+    %%   - "Khi viết JD cần có những mục gì?"
+    %%
+    %% Câu hỏi phức tạp → Agent:
+    %%   - "Sàng lọc CV ứng viên A cho vị trí Backend Developer"
+    %%   - "Kiểm tra lịch và hẹn phỏng vấn ngày mai"
+    %%   - "Sàng lọc + Hẹn phỏng vấn nếu ứng viên đạt yêu cầu"
+
+    %% Styling
+    style ROUTER fill:#FF6B6B,stroke:#333,stroke-width:2px,color:#fff
+    style CHATBOT_PATH fill:#4ECDC4,stroke:#333,stroke-width:2px
+    style AGENT_PATH fill:#45B7D1,stroke:#333,stroke-width:2px
+    style GUARDRAIL fill:#FFA07A,stroke:#333,stroke-width:2px
+    style OUTPUT fill:#98D8C8,stroke:#333,stroke-width:2px,color:#333
+    style START fill:#667eea,stroke:#333,stroke-width:2px,color:#fff
